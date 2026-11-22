@@ -1,0 +1,27 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# Dashboard → New → Blueprint → wybierz to repozytorium. Render zapyta o wartości oznaczone `sync: false`.
+services:
+  - type: web
+    name: mlodyrodzic
+    runtime: node
+    region: frankfurt # ta sama okolica co Neon aws-eu-central-1
+    plan: free # na czas oceny jury lepiej starter: free usypia usługę po 15 min bez ruchu (pierwsze wejście ~1 min)
+    branch: main
+    autoDeploy: true
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "26"
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+      # Hasło do panelu ustawień (/admin/logowanie). Podaj je jury w opisie zgłoszenia.
+      - key: ADMIN_HASLO
+        sync: false
+      # Klucz do podpisywania sesji panelu; Render wygeneruje losowy.
+      - key: ADMIN_SEKRET
+        generateValue: true
+      # Connection string z Neon (Dashboard → Connect, wersja „pooled”). Bez niego zmiany w panelu znikają przy restarcie.
+      - key: DATABASE_URL
+        sync: false

@@ -1,0 +1,9 @@
+docs/sprawy/
+.scratch/
+node_modules
+.env*
+docs/*.zip
+.next/
+next-env.d.ts
+data/parametry.json
+!.env.example

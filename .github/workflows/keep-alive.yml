@@ -1,0 +1,40 @@
+# Budzi usługę na Render Free, która zasypia po 15 minutach bez ruchu.
+#
+# Działa dopiero po ustawieniu zmiennej repozytorium RENDER_URL
+# (Settings → Secrets and variables → Actions → Variables), np. https://mlodyrodzic.onrender.com
+# Harmonogram działa tylko z gałęzi domyślnej (main).
+#
+# Pinguje stronę główną, a nie /api/parametry: strona główna nie łączy się z bazą,
+# więc Neon może usypiać compute i nie zużywa limitu CU-godzin.
+#
+# Koszt: każde uruchomienie to ~1 minuta Actions. W publicznym repozytorium minuty są darmowe;
+# w prywatnym (plan Free: 2000 min/mies.) całodobowy ping zużyje ok. 4500 min, więc tam zawęź godziny,
+# np. '*/10 6-22 * * *'. Po ocenie jury można wyłączyć workflow (Actions → Keep Render awake → Disable workflow).
+name: Keep Render awake
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: keep-alive
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  ping:
+    if: vars.RENDER_URL != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Ping
+        env:
+          RENDER_URL: ${{ vars.RENDER_URL }}
+        # Uśpiona usługa startuje do ~1 min, stąd długi timeout i powtórki.
+        run: >
+          curl --fail --silent --show-error --location
+          --max-time 120 --retry 3 --retry-delay 15 --retry-all-errors
+          --output /dev/null --write-out 'HTTP %{http_code} w %{time_total}s\n'
+          "$RENDER_URL"
