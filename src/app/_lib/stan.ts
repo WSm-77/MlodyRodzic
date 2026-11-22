@@ -16,6 +16,7 @@ const K_SYTUACJA = 'mlodyrodzic.sytuacja';
 const K_PLAN = 'mlodyrodzic.plan';
 const K_DZIS = 'mlodyrodzic.dzis';
 const K_SZKIC = 'mlodyrodzic.szkic';
+const K_WYSLANE = 'mlodyrodzic.wyslane';
 const ZDARZENIE = 'mlodyrodzic-zmiana';
 
 function czytaj<T>(klucz: string): T | null {
@@ -47,7 +48,32 @@ export const zapiszDzis = (d: ISODate | null) => zapisz(K_DZIS, d);
 export const wyloguj = () => {
   zapiszSytuacje(null);
   zapiszPlan(null);
+  zapiszDzis(null);
+  zapisz(K_WYSLANE, null);
 };
+
+/** Sprawa przykładowa ZUS jako Sytuacja rodziny: z jej planem i dniem oceny (dzień wniosku w sprawie). */
+export const wczytajSprawe = (sp: { sytuacja: Sytuacja; plan?: Partial<PlanRodzica>; dzis: ISODate }) => {
+  zapiszSytuacje(sp.sytuacja);
+  zapiszPlan({ ...PLAN_DOMYSLNY, ...sp.plan });
+  zapiszDzis(sp.dzis);
+  zapisz(K_WYSLANE, null);
+};
+
+/** Symulowana wysyłka wniosku (do pracodawcy, ZUS albo urzędu stanu cywilnego), po identyfikatorze pozycji z listy wniosków. */
+export interface Wyslanie {
+  kiedy: ISODate;
+  nr: string;
+  adresat: string;
+}
+
+export function useWyslane(): Record<string, Wyslanie> {
+  const { wartosc } = useZapisany<Record<string, Wyslanie>>(K_WYSLANE);
+  return wartosc ?? {};
+}
+
+export const zapiszWyslanie = (id: string, w: Wyslanie) => zapisz(K_WYSLANE, { ...czytaj<Record<string, Wyslanie>>(K_WYSLANE), [id]: w });
+export const wyczyscWyslane = () => zapisz(K_WYSLANE, null);
 
 function subskrybuj(cb: () => void) {
   window.addEventListener(ZDARZENIE, cb);

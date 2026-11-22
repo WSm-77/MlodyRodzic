@@ -7,7 +7,10 @@ const nextConfig = {
   // Typy sprawdza `npm run typecheck` (TypeScript 7, bez API JS, którego używa next build).
   typescript: { ignoreBuildErrors: true },
   // pdf-lib czyta wzory formularzy z public/forms w Route Handlerze.
-  outputFileTracingIncludes: { '/api/wnioski/zam': ['./public/forms/ZAM_edytowalny.pdf', './src/serwer/czcionki/*.ttf'] },
+  outputFileTracingIncludes: {
+    '/api/wnioski/zam': ['./public/forms/ZAM_edytowalny.pdf', './src/serwer/czcionki/*.ttf'],
+    '/api/sprawy/[id]/z3': ['./public/forms/Z-3_edytowalny.pdf', './src/serwer/czcionki/*.ttf'],
+  },
 };
 
 export default nextConfig;

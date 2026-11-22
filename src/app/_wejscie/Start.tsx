@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { IkonaKalkulator, IkonaKlodka, IkonaLegitymacja, IkonaLista, IkonaSerce, IkonaStrzalka, Znak } from '../_komponenty/Ikony';
+import { IkonaDokument, IkonaKalkulator, IkonaKlodka, IkonaLegitymacja, IkonaLista, IkonaSerce, IkonaStrzalka, Znak } from '../_komponenty/Ikony';
 
 /** Dokąd prowadzą trzy wejścia. */
 export const TRASY_WEJSC = {
@@ -163,6 +163,10 @@ export function Start() {
         <Link href="/wsparcie" className="inline-flex min-h-12 items-center gap-1.5 text-gov-600 hover:text-gov-800">
           <IkonaSerce className="h-4 w-4" />
           Wsparcie dla rodziców
+        </Link>
+        <Link href="/sprawy" className="inline-flex min-h-12 items-center gap-1.5 text-gov-600 hover:text-gov-800">
+          <IkonaDokument className="h-4 w-4" />
+          Sprawy przykładowe ZUS
         </Link>
         <Link href="/witaj" className="inline-flex min-h-12 items-center text-slate-600 hover:text-gov-800">
           Jak to działa?

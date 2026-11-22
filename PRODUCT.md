@@ -33,7 +33,9 @@ Są trzy wejścia:
 - Przewodnik, czyli kreator Sytuacji rodziny krok po kroku;
 - Szybkie wyliczenie z kilkoma pytaniami i resztą wartości domyślnych.
 
-Wynik to Plan rodzica z ekranami: Pulpit, Kalkulator, Świadczenia (Uprawnienia i ryzyka), Wnioski i terminy, Wsparcie, Dane z ZUS. Dokumenty urzędowe to ZAM, ZAS-53, Z-3, e-ZLA, odpis aktu urodzenia i wnioski urlopowe. Aplikacja nie ma własnych ekranów wypełniania wniosków.
+Wynik to Plan rodzica z ekranami: Pulpit, Kalkulator, Świadczenia (Uprawnienia i ryzyka), Wnioski i terminy, Wsparcie, Dane z ZUS. Dokumenty urzędowe to ZAM, ZAS-53, Z-3, e-ZLA, odpis aktu urodzenia i wnioski urlopowe. Wnioski urlopowe (treść według rozporządzenia), ZAM i wniosek o odpis aktu rodzic wypełnia w aplikacji danymi z Planu; wysyłka jest symulowana. Pozostałe formularze ZUS otwierają się jako edytowalne PDF-y.
+
+Czwarte wejście, dla jury i testów: Sprawy przykładowe ZUS (wybór sprawy z porównaniem do decyzji ZUS albo wczytanie edytowalnego PDF ZAM, Z-3, Z-3a).
 
 ## Capabilities and Constraints
 

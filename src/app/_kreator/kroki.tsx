@@ -326,7 +326,7 @@ export function KrokUbezpieczenie({ s, ustaw }: PropsKroku) {
             </Pole>
             <Pole etykieta="Przyczyna">
               {(id) => (
-                <select id={id} className={selectCss} value={s.ustanie!.przyczyna} onChange={(e) => ustaw({ ustanie: { ...s.ustanie!, przyczyna: e.target.value as PrzyczynaUstania }, okresyUbezpieczenia: undefined })}>
+                <select id={id} className={selectCss} value={s.ustanie!.przyczyna} onChange={(e) => ustaw({ ustanie: { ...s.ustanie!, przyczyna: e.target.value as PrzyczynaUstania }, okresyUbezpieczenia: undefined, zapewnionoInneZatrudnienie: s.zapewnionoInneZatrudnienie ?? false })}>
                   {PRZYCZYNY.map((p) => (
                     <option key={p.v} value={p.v}>
                       {p.e}
@@ -335,6 +335,16 @@ export function KrokUbezpieczenie({ s, ustaw }: PropsKroku) {
                 </select>
               )}
             </Pole>
+            {['upadlosc_pracodawcy', 'likwidacja_pracodawcy', 'smierc_pracodawcy'].includes(s.ustanie.przyczyna) && (
+              <div className="sm:col-span-2">
+                <Przelacznik
+                  etykieta="Pracodawca zapewnił mi inne zatrudnienie"
+                  opis="Bez innego zatrudnienia do dnia porodu przysługuje zasiłek w wysokości zasiłku macierzyńskiego."
+                  wlaczony={!!s.zapewnionoInneZatrudnienie}
+                  onChange={(v) => ustaw({ zapewnionoInneZatrudnienie: v })}
+                />
+              </div>
+            )}
           </div>
         )}
         {pracownik && (

@@ -26,19 +26,32 @@ Panel ustawień dla pracowników ma osobne logowanie pod `/admin/logowanie` (nie
 | `/plan/kalkulator` | Zintegrowany kalkulator: wariant 100/70 albo 81,5%, podział urlopu rodzicielskiego między rodziców, łączenie z pracą, ojcowski, oś czasu |
 | `/plan/swiadczenia` | Świadczenia każdego z rodziców: okres, stawka, podstawa wymiaru, kwota, ryzyka i podstawa prawna |
 | `/plan/wnioski` | Dokumenty i terminy: co, do kogo (pracodawca czy ZUS), do kiedy, z linkami do formularzy |
+| `/plan/wnioski/[id]` | Wypełnienie i symulowana wysyłka wniosku: wniosek urlopowy do pracodawcy (treść według rozporządzenia, Dz.U. 2025 poz. 322), ZAM wypełniony danymi Planu (PDF do pobrania, wysyłka przez eZUS), wniosek o odpis aktu urodzenia |
+| `/sprawy` | Sprawy przykładowe ZUS: wybór sprawy (T01–T14) z porównaniem „decyzja ZUS / MłodyRodzic” oraz wczytanie edytowalnego PDF (ZAM, Z-3, Z-3a) do Przewodnika |
+| `/sprawy/[id]` | Porównanie jednej sprawy z rozstrzygnięciem ZUS, Plan rodzica tej sprawy jednym kliknięciem i Z-3 sprawy wypełniony na oficjalnym wzorze ZUS |
 | `/ezus` | Symulacja eZUS: okresy ubezpieczenia, wynagrodzenia lub podstawa składek, podgląd e-ZLA, zaległość w składkach z zaświadczeniem o stanie rozliczeń, pytanie do ZUS |
 | `/wsparcie` | 11 zweryfikowanych organizacji charytatywnych, telefony kryzysowe, oficjalne źródła (zus.pl, gov.pl, PIP) |
 | `/admin/logowanie` | Logowanie pracownika do panelu ustawień (hasło, nie mObywatel) |
 | `/admin` | Panel parametrów prawnych (stawki, wymiary, kwoty, terminy) bez zmiany kodu; bez sesji przekierowuje do logowania |
 
+## Jak sprawdzić sprawy przykładowe ZUS
+
+1. Na ekranie startowym wybierz „Sprawy przykładowe ZUS” (albo wejdź na `/sprawy`).
+2. Wybierz sprawę. Ekran zestawia rozstrzygnięcie ZUS (prawo, okresy, stawka) i kwoty wyliczone z danych płacowych Z-3 z wynikiem silnika. Wszystkie 10 spraw w katalogu daje wynik zgodny z ZUS (test `src/aplikacja/sprawy.test.ts`).
+3. „Otwórz Plan rodzica tej sprawy” wczytuje sprawę do aplikacji: kalkulator, świadczenia, wnioski i terminy liczą się na dzień wniosku w sprawie, z płacą minimalną z roku sprawy.
+4. „Pobierz Z-3 tej sprawy” daje oficjalny edytowalny wzór ZUS wypełniony danymi płacowymi. Wczytaj ten plik w sekcji „Wczytaj formularz PDF”: aplikacja odczyta pola i przeniesie je do Przewodnika.
+
+Skany z zestawów ZUS nie mają pól formularza ani warstwy tekstowej (sprawdziliśmy wszystkie 87 plików), więc automatycznie odczytujemy tylko formularze wypełnione elektronicznie. Odczyt skanu wymagałby OCR, a aplikacja świadomie nie używa AI. Dane ze skanu wpisuje się w Przewodniku. Sprawy T05, T06, T10 i T13 sprawdzają testy silnika (`src/silnik/sprawy.test.ts`), bo Sytuacja rodziny ich nie wyraża.
+
 ## Architektura
 
 - `src/silnik/` – silnik reguł (czysty TypeScript, trzy szwy: `podstawaWymiaru`, `urlopyIZasilek`, `ocenaRyzyk`), testy spraw przykładowych T01–T14.
 - `src/aplikacja/` – Sytuacja rodziny i Plan rodzica, most do silnika (`rozpatrz.ts`), dokumenty i terminy według macierzy z `docs/research/sciezka-dokumentow.md`, mapowanie pól ZAM, persony demo, organizacje wsparcia.
-- `src/serwer/` – wypełnianie PDF (pdf-lib z czcionką DejaVu) i parametry z panelu (tylko nadpisania: Postgres, gdy ustawiono `DATABASE_URL`, inaczej `data/parametry.json`).
-- `src/app/` – Next.js App Router. Silnik liczy w przeglądarce, stan w `localStorage`. Route Handlers: `/api/zus/[persona]`, `/api/parametry` (PUT tylko w sesji pracownika), `/api/admin/sesja`, `/api/wnioski/zam`.
+- `src/aplikacja/sprawy.ts` – katalog spraw przykładowych jako Sytuacje rodziny z rozstrzygnięciem ZUS; `formularzePdf.ts` – mapowanie pól Z-3, Z-3a i ZAM w obie strony; `wnioski.ts` – treść wniosków urlopowych według rozporządzenia.
+- `src/serwer/` – wypełnianie i odczyt PDF (pdf-lib z czcionką DejaVu) i parametry z panelu (tylko nadpisania: Postgres, gdy ustawiono `DATABASE_URL`, inaczej `data/parametry.json`).
+- `src/app/` – Next.js App Router. Silnik liczy w przeglądarce, stan w `localStorage`. Route Handlers: `/api/zus/[persona]`, `/api/parametry` (PUT tylko w sesji pracownika), `/api/admin/sesja`, `/api/wnioski/zam` (wypełniony ZAM), `/api/sprawy/[id]/z3` (Z-3 sprawy przykładowej), `/api/formularze/odczyt` (POST z plikiem PDF: odczyt pól ZAM, Z-3, Z-3a).
 
-Wyniki mają charakter informacyjny. Logowanie, dane z ZUS i wysyłka wniosków są symulowane na fikcyjnych danych.
+Wyniki mają charakter informacyjny. Logowanie, dane z ZUS, wysyłka wniosków (do pracodawcy, ZUS i urzędu stanu cywilnego) są symulowane na fikcyjnych danych.
 
 ## Wykorzystanie AI
 

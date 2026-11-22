@@ -112,9 +112,3 @@ export function polaZam(s: Sytuacja, plan: PlanRodzica, r: Rozpatrzenie, dzis: I
   p('Page5.Data', 'Data wypełnienia (ddmmrrrr)', R, dataZam(dzis), 'plan', { maks: 8 });
   return pola;
 }
-
-/** Pełna nazwa pola AcroForm z nazwy skróconej, np. „Page1.PESEL” → `topmostSubform[0].Page1[0].PESEL[0]`. */
-export const pelnaNazwa = (krotka: string): string => {
-  const [strona, pole] = krotka.split('.');
-  return `topmostSubform[0].${strona}[0].${pole}[0]`;
-};
