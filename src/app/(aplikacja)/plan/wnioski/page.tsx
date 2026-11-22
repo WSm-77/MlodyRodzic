@@ -6,14 +6,16 @@
  * formularza (lokalny PDF z ZUS) albo strony, na której sprawę się załatwia. Załączniki pod każdym wnioskiem.
  */
 
+import Link from 'next/link';
 import { useState, useId } from 'react';
 import { sciezkaRodzica, type PozycjaDokumentu, type StatusTerminu } from '@/aplikacja/dokumenty';
 import { czytelne } from '@/aplikacja/format';
 import type { Sytuacja } from '@/aplikacja/sytuacja';
 import { imieRoli } from '@/aplikacja/uprawnienia';
-import { IkonaDalej, IkonaInfo, IkonaZewnetrzny } from '@/app/_komponenty/Ikony';
+import { formularzWniosku } from '@/aplikacja/wnioski';
+import { IkonaDalej, IkonaInfo, IkonaPtaszek, IkonaZewnetrzny } from '@/app/_komponenty/Ikony';
 import { BrakSytuacji, Ladowanie } from '@/app/_komponenty/ui';
-import { useRozpatrzenie } from '@/app/_lib/stan';
+import { useRozpatrzenie, useWyslane, type Wyslanie } from '@/app/_lib/stan';
 
 const MIESIACE = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
 function krotko(d: string, dzis: string): string {
@@ -32,7 +34,7 @@ const TLO: Record<StatusTerminu, string> = {
 
 const OPIS_SCIEZKI = { A: 'Zasiłek wypłaca pracodawca', B: 'Zasiłek wypłaca ZUS, wniosek składasz u pracodawcy', C: 'Wniosek składasz w ZUS i ZUS wypłaca zasiłek' } as const;
 
-function Pozycja({ p, s, dzis, pierwsza }: { p: PozycjaDokumentu; s: Sytuacja; dzis: string; pierwsza: boolean }) {
+function Pozycja({ p, s, dzis, pierwsza, formularz, wyslanie }: { p: PozycjaDokumentu; s: Sytuacja; dzis: string; pierwsza: boolean; formularz: boolean; wyslanie?: Wyslanie }) {
   const pelna = pierwsza && (p.status === 'pilne' || p.status === 'zaplanowane');
   const termin = p.status === 'bez_terminu' || !p.termin ? 'bez terminu' : p.status === 'minal' ? `minął ${krotko(p.termin, dzis)}` : `do ${krotko(p.termin, dzis)}`;
   const tekst = pelna ? 'text-white' : 'text-gov-900';
@@ -65,8 +67,23 @@ function Pozycja({ p, s, dzis, pierwsza }: { p: PozycjaDokumentu; s: Sytuacja; d
         <p className={`mt-1.5 text-sm leading-relaxed ${tekst2}`}>
           <strong className="font-semibold">{imieRoli(s, p.kto)}</strong> · {p.adresat}. {p.terminOpis.charAt(0).toUpperCase() + p.terminOpis.slice(1)}.
         </p>
-        {linki.length > 0 && (
+        {wyslanie && (
+          <p className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${pelna ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-800'}`}>
+            <IkonaPtaszek className="h-3.5 w-3.5" strokeWidth={3} />
+            Wysłano {krotko(wyslanie.kiedy, dzis)} · nr {wyslanie.nr}
+          </p>
+        )}
+        {(linki.length > 0 || formularz) && (
           <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1">
+            {formularz && (
+              <Link
+                href={`/plan/wnioski/${encodeURIComponent(p.id)}`}
+                className={`inline-flex min-h-9 items-center gap-1 rounded-lg px-3 text-sm font-bold ${pelna ? 'bg-white text-pilne hover:bg-white/90' : 'bg-gov-600 text-white hover:bg-gov-700'}`}
+              >
+                {wyslanie ? 'Zobacz wniosek' : p.id === 'odpis' ? 'Złóż wniosek' : 'Wypełnij i wyślij'}
+                <IkonaDalej className="h-4 w-4" />
+              </Link>
+            )}
             {linki.map((l) => (
               <a key={l.href} href={l.href} target="_blank" rel="noreferrer" className={`inline-flex min-h-9 items-center gap-1 text-sm font-bold underline decoration-2 underline-offset-[3px] ${link}`}>
                 {l.tekst}
@@ -130,7 +147,8 @@ function Baner({ s }: { s: Sytuacja }) {
 }
 
 export default function WnioskiITerminy() {
-  const { sytuacja: s, gotowe, wynik, dokumenty, dzis } = useRozpatrzenie();
+  const { sytuacja: s, gotowe, wynik, dokumenty, dzis, plan } = useRozpatrzenie();
+  const wyslane = useWyslane();
   if (!gotowe) return <Ladowanie />;
   if (!s || !wynik) return <BrakSytuacji />;
 
@@ -153,7 +171,7 @@ export default function WnioskiITerminy() {
       {aktywne.length > 0 ? (
         <ol className="kolejno relative pl-8 before:absolute before:top-5 before:bottom-8 before:left-[11px] before:w-0.5 before:bg-[#e8a5a1]">
           {aktywne.map((p, i) => (
-            <Pozycja key={p.id} p={p} s={s} dzis={dzis} pierwsza={i === 0} />
+            <Pozycja key={p.id} p={p} s={s} dzis={dzis} pierwsza={i === 0} formularz={!!formularzWniosku(p, s, plan, wynik, dzis)} wyslanie={wyslane[p.id]} />
           ))}
         </ol>
       ) : (
@@ -168,14 +186,15 @@ export default function WnioskiITerminy() {
           <p className="text-sm text-slate-600">Te terminy już minęły. Część spraw da się jeszcze załatwić: sprawdź opis.</p>
           <ol className="kolejno relative pl-8 before:absolute before:top-5 before:bottom-8 before:left-[11px] before:w-0.5 before:bg-slate-300">
             {minione.map((p) => (
-              <Pozycja key={p.id} p={p} s={s} dzis={dzis} pierwsza={false} />
+              <Pozycja key={p.id} p={p} s={s} dzis={dzis} pierwsza={false} formularz={!!formularzWniosku(p, s, plan, wynik, dzis)} wyslanie={wyslane[p.id]} />
             ))}
           </ol>
         </section>
       )}
 
       <p className="text-xs leading-relaxed text-slate-600">
-        Formularze ZUS otwierają się jako edytowalne PDF-y pobrane ze strony ZUS. Wniosek o urlop u pracodawcy nie ma urzędowego wzoru: link prowadzi do rozporządzenia, które określa jego treść.
+        „Wypełnij i wyślij” przygotowuje wniosek z danymi z Twojego Planu: wniosek urlopowy do pracodawcy (treść według rozporządzenia, Dz.U. 2025 poz. 322) albo formularz ZAM. Wysyłka jest symulowana. Pozostałe formularze ZUS
+        otwierają się jako edytowalne PDF-y pobrane ze strony ZUS.
       </p>
     </div>
   );

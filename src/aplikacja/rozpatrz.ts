@@ -24,7 +24,8 @@ import {
   type WynikRyzyk,
   type WynikUrlopow,
 } from '@/silnik';
-import { dodajDni, dodajLata, dodajMiesiaceDoMiesiaca, miesiacDaty, pierwszyDzienMiesiaca, porownaj } from '@/silnik/wspolne/daty';
+import { kwotaDzienna } from '@/silnik/wspolne/kwoty';
+import { dodajDni, dodajLata, dodajMiesiaceDoMiesiaca, miesiacDaty, pierwszyDzienMiesiaca, porownaj, roznicaDni } from '@/silnik/wspolne/daty';
 import { drugaRola, jestPracownikiem, type DrugiRodzic, type PlanRodzica, type Rola, type Sytuacja } from './sytuacja';
 
 export interface Rozpatrzenie {
@@ -38,6 +39,29 @@ export interface Rozpatrzenie {
   wnioskodawca: Rola | null;
   /** Granice suwaka podziału urlopu rodzicielskiego. */
   podzial: { tygodnieLacznie: number; maksDlaJednego: number; nieprzenoszalne: number; tygodnieDrugiego: number } | null;
+  /** Zasiłek w wysokości zasiłku macierzyńskiego do dnia porodu (R-ZWM-01), gdy przysługuje. */
+  zwm: ZasilekDoPorodu | null;
+}
+
+/**
+ * Zasiłek w wysokości zasiłku macierzyńskiego (UZ art. 30 ust. 3): 100% podstawy od dnia po ustaniu umowy do dnia
+ * przed porodem. Podstawę liczymy na dzień powstania prawa (dzień po ustaniu), nie na dzień porodu.
+ */
+export interface ZasilekDoPorodu {
+  od: ISODate;
+  do: ISODate;
+  dni: number;
+  stawka: number;
+  podstawa: WynikPodstawy | null;
+  kwotaDzienna: Grosze | null;
+  kwota: Grosze | null;
+  podstawaPrawna: string[];
+}
+
+/** Parametry z panelu z płacą minimalną z roku sprawy przykładowej (jedyny parametr, który różni lata spraw). */
+export function parametrySytuacji(s: Sytuacja, parametry: ParametryPrawne): ParametryPrawne {
+  const placa = s.sprawaPrzykladowa?.placaMinimalna;
+  return placa ? { ...parametry, placaMinimalna: { ...parametry.placaMinimalna, wartosc: placa } } : parametry;
 }
 
 /** Dzień, w którym powstaje prawo: dzień porodu albo przyjęcia dziecka. */
@@ -121,6 +145,7 @@ export function wejscieRyzyk(s: Sytuacja, dzis: ISODate): WejscieRyzyk {
     ...(s.dataSplatyZadluzenia ? { dataSplatyZadluzenia: s.dataSplatyZadluzenia } : {}),
     ...(s.zmianaWymiaruCzasuPracy ? { zmianaWymiaruCzasuPracy: true } : {}),
     ...(s.sygnalyRyzyka ? { sygnalyRyzyka: s.sygnalyRyzyka } : {}),
+    ...(s.zapewnionoInneZatrudnienie !== undefined ? { zapewnionoInneZatrudnienie: s.zapewnionoInneZatrudnienie } : {}),
   };
 }
 
@@ -232,7 +257,8 @@ function ulozPlan(wejscie: WejscieUrlopow, plan: PlanRodzica, bezPlanu: WynikUrl
   if (oj?.przysluguje && plan.ojcowski && wejscie.rodzice.some((r) => r.rola === 'ojciec' && r.ubezpieczony)) {
     const start = wejscie.zdarzenie.rodzaj === 'urodzenie' ? wejscie.zdarzenie.dataPorodu : wejscie.zdarzenie.dataPrzyjecia;
     const od = dodajDni(start, Math.max(0, plan.ojcowskiPoDniach));
-    okresy.push({ rodzaj: 'ojcowski', rodzic: 'ojciec', od, do: dodajDni(od, oj.dni - 1) });
+    const dni = Math.min(Math.max(plan.ojcowskiDni ?? oj.dni, 1), oj.dni);
+    okresy.push({ rodzaj: 'ojcowski', rodzic: 'ojciec', od, do: dodajDni(od, dni - 1) });
   }
   return { okresy, podzial };
 }
@@ -247,7 +273,8 @@ export function sumaOkresow(okresy: OkresZasilku[]): Grosze | null {
   return suma;
 }
 
-export function rozpatrz(s: Sytuacja, plan: PlanRodzica, parametry: ParametryPrawne, dzis: ISODate): Rozpatrzenie {
+export function rozpatrz(s: Sytuacja, plan: PlanRodzica, parametryPanelu: ParametryPrawne, dzis: ISODate): Rozpatrzenie {
+  const parametry = parametrySytuacji(s, parametryPanelu);
   const wp = wejsciePodstawy(
     {
       tytul: s.tytul,
@@ -287,5 +314,31 @@ export function rozpatrz(s: Sytuacja, plan: PlanRodzica, parametry: ParametryPra
   const glowny = urlopy.okresy.find((o) => GLOWNE.includes(o.rodzaj));
   const wnioskodawca = glowny && glowny.rodzic !== 'inny' ? glowny.rodzic : null;
   const ryzykaDrugiego = d?.ubezpieczony ? ocenaRyzyk(wejscieRyzykDrugiego(s, d, dzis), parametry) : null;
-  return { podstawa, podstawaDrugiego, urlopy, ryzyka: ocenaRyzyk(wejscieRyzyk(s, dzis), parametry), ryzykaDrugiego, wnioskodawca, podzial };
+  const ryzyka = ocenaRyzyk(wejscieRyzyk(s, dzis), parametry);
+  return { podstawa, podstawaDrugiego, urlopy, ryzyka, ryzykaDrugiego, wnioskodawca, podzial, zwm: zasilekDoPorodu(s, ryzyka, parametry) };
+}
+
+function zasilekDoPorodu(s: Sytuacja, ryzyka: WynikRyzyk, parametry: ParametryPrawne): ZasilekDoPorodu | null {
+  const w = ryzyka.wyniki.find((x) => x.regula === 'R-ZWM-01' && x.status === 'przysluguje');
+  const od = w?.skutek?.od;
+  // Przed porodem silnik nie zna końca okresu: liczymy do dnia przed przewidywaną datą porodu.
+  const do_ = w?.skutek?.do ?? (s.zdarzenie === 'urodzenie' ? dodajDni(s.dataZdarzenia, -1) : undefined);
+  if (!w || !od || !do_) return null;
+  const stawka = w.skutek?.stawka ?? 1000;
+  const wp = wejsciePodstawy(
+    {
+      tytul: s.tytul,
+      dataZdarzenia: od,
+      poczatekUbezpieczenia: s.poczatekUbezpieczenia,
+      pelnyEtat: s.pelnyEtat,
+      brutto: s.bruttoMiesiecznie,
+      ...(s.miesiacePracownika ? { miesiacePracownika: s.miesiacePracownika } : {}),
+      ...(s.zmianaWymiaruCzasuPracy ? { zmianaWymiaruCzasuPracy: true } : {}),
+    },
+    parametry,
+  );
+  const podstawa = wp ? podstawaWymiaru(wp, parametry) : null;
+  const dni = roznicaDni(od, do_) + 1;
+  const dzienna = podstawa?.podstawa != null ? kwotaDzienna(podstawa.podstawa, stawka, parametry.dzielnikDzienny.wartosc) : null;
+  return { od, do: do_, dni, stawka, podstawa, kwotaDzienna: dzienna, kwota: dzienna != null ? dzienna * dni : null, podstawaPrawna: w.podstawaPrawna };
 }

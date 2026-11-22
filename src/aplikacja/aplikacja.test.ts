@@ -7,7 +7,8 @@ import { dokumenty, sciezka } from './dokumenty';
 import { persona, PERSONY } from './persony';
 import { rozpatrz } from './rozpatrz';
 import { PLAN_DOMYSLNY, sytuacjaPusta, type PlanRodzica } from './sytuacja';
-import { pelnaNazwa, polaZam } from './zam';
+import { pelnaNazwaPola as pelnaNazwa } from './formularzePdf';
+import { polaZam } from './zam';
 
 const DZIS = '2026-11-21';
 const policz = (id: string, plan: Partial<PlanRodzica> = {}) => {

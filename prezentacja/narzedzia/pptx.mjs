@@ -59,7 +59,7 @@ for (let nr = 1; nr <= liczba; nr++) {
       : el.classList.contains('z-prawej') ? 'z-prawej' : el.classList.contains('skala') ? 'skala' : 'gora';
     const opis = (el.querySelector('img')?.alt || el.alt || el.innerText || '').replace(/\s+/g, ' ').trim()
       || 'Ilustracja: rodzic z dzieckiem w sercu';
-    return {i, x: r.left, y: r.top, w: r.width, h: r.height, opoznienie, rodzaj, opis};
+    return {i, x: r.left, y: r.top, w: r.width, h: r.height, opoznienie, rodzaj, opis, link: el.closest('a[href]')?.href || null};
   });
   });
   const nazwa = await strona.evaluate(() => document.querySelector('.slide.active').getAttribute('aria-label'));
@@ -100,6 +100,7 @@ for (const s of slajdy) {
       data: 'image/png;base64,' + e.obraz.toString('base64'),
       x: e.kx * PX, y: e.ky * PX, w: e.kw * PX, h: e.kh * PX,
       altText: e.opis.slice(0, 1000), objectName: `animacja-${e.i}`,
+      ...(e.link ? {hyperlink: {url: e.link, tooltip: e.link}} : {}),
     });
   }
   slide.addNotes(s.nazwa || '');
