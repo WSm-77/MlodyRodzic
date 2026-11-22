@@ -12,8 +12,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Persona } from '@/aplikacja/persony';
 import { PERSONY } from '@/aplikacja/persony';
 import { NAZWY_TYTULOW, PLAN_DOMYSLNY, prowadziFirme } from '@/aplikacja/sytuacja';
-import { IkonaDalej, IkonaPtaszek, IkonaStrzalka, IkonaTarcza, IkonaWstecz, Znak } from '@/app/_komponenty/Ikony';
-import { zapiszPlan, zapiszSytuacje } from '@/app/_lib/stan';
+import { IkonaDalej, IkonaDokument, IkonaPtaszek, IkonaStrzalka, IkonaTarcza, IkonaWstecz, Znak } from '@/app/_komponenty/Ikony';
+import { wyczyscWyslane, zapiszDzis, zapiszPlan, zapiszSytuacje } from '@/app/_lib/stan';
 
 type Krok = 'wybor' | 'potwierdzenie' | 'pobieranie';
 
@@ -131,6 +131,8 @@ export default function Logowanie() {
         const s = p.sytuacja;
         zapiszSytuacje(prowadziFirme(s.tytul) ? s : { ...s, platnik: { ...s.platnik, ponad20: false }, zalozenia: ['ponad20'] });
         zapiszPlan({ ...PLAN_DOMYSLNY, ...p.plan });
+        zapiszDzis(null);
+        wyczyscWyslane();
         setTimeout(() => router.push('/ezus?pobrano=1'), 500);
       })
       .catch(() => setBlad('Nie udało się pobrać danych z eZUS. Spróbuj ponownie.'));
@@ -175,6 +177,19 @@ export default function Logowanie() {
               <span className="min-w-0 flex-1">
                 <span className="block text-[15px] font-bold text-slate-900">Logowanie dla pracowników</span>
                 <span className="block text-sm text-slate-600">Panel ustawień parametrów obliczeń</span>
+              </span>
+              <IkonaStrzalka className="h-4 w-4 shrink-0 text-slate-400" />
+            </Link>
+            <Link
+              href="/sprawy"
+              className="mt-2 flex min-h-14 items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/70 px-4 py-3 text-left transition-colors hover:border-gov-200 hover:bg-white sm:mx-14"
+            >
+              <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-700">
+                <IkonaDokument className="h-5 w-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-bold text-slate-900">Sprawy przykładowe ZUS</span>
+                <span className="block text-sm text-slate-600">Wybierz sprawę albo wczytaj formularz PDF</span>
               </span>
               <IkonaStrzalka className="h-4 w-4 shrink-0 text-slate-400" />
             </Link>

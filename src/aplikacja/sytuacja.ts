@@ -116,6 +116,13 @@ export interface Sytuacja {
   sygnalyRyzyka?: SygnalyRyzyka;
   /** Data złożenia wniosku o 81,5% (wniosek o pełny wymiar), jeśli już złożony. */
   wniosek815Data?: ISODate;
+  /** Upadłość, likwidacja albo śmierć pracodawcy: czy zapewniono inne zatrudnienie (UZ art. 30 ust. 3). Brak = nie wiadomo. */
+  zapewnionoInneZatrudnienie?: boolean;
+  /**
+   * Sprawa przykładowa ZUS wczytana z katalogu (src/aplikacja/sprawy.ts). Sprawy pochodzą z różnych lat, więc
+   * niosą płacę minimalną z roku sprawy: od niej zależy minimalna podstawa wymiaru i próg zadłużenia.
+   */
+  sprawaPrzykladowa?: { id: string; placaMinimalna?: Grosze };
 
   drugiRodzic: DrugiRodzic | null;
 }
@@ -136,6 +143,8 @@ export interface PlanRodzica {
   ojcowski: boolean;
   /** Dzień rozpoczęcia urlopu ojcowskiego, liczony od dnia zdarzenia. */
   ojcowskiPoDniach: number;
+  /** Ile dni urlopu ojcowskiego wziąć teraz (pierwsza część to co najmniej 7 dni). Brak = cały wymiar. */
+  ojcowskiDni?: number;
   praca: PracaPrzyUrlopie | null;
 }
 

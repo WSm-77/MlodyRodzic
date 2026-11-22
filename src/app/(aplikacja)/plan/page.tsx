@@ -156,7 +156,10 @@ export default function Pulpit() {
   if (!s || !wynik || !u) return <BrakSytuacji />;
 
   const okresy = wynik.urlopy.okresy;
-  const okres = okresy.length ? { od: okresy.reduce((a, o) => (o.od < a ? o.od : a), okresy[0]!.od), do: okresy.reduce((a, o) => (o.do > a ? o.do : a), okresy[0]!.do) } : null;
+  // Zasiłek w wysokości zasiłku macierzyńskiego (do porodu) wchodzi do sumy i okresu obok zasiłków za urlopy.
+  const zakresy = [...okresy, ...(wynik.zwm ? [wynik.zwm] : [])];
+  const okres = zakresy.length ? { od: zakresy.reduce((a, o) => (o.od < a ? o.od : a), zakresy[0]!.od), do: zakresy.reduce((a, o) => (o.do > a ? o.do : a), zakresy[0]!.do) } : null;
+  const suma = wynik.urlopy.suma == null || (wynik.zwm && wynik.zwm.kwota == null) ? null : wynik.urlopy.suma + (wynik.zwm?.kwota ?? 0);
   const wnioskodawca = wynik.wnioskodawca ?? (okresy[0]?.rodzic !== 'inny' ? okresy[0]?.rodzic : undefined);
   const sc = wnioskodawca ? sciezkaRodzica(s, wnioskodawca) : null;
   const tytulWyplacajacego = wnioskodawca === s.rola ? s.tytul : s.drugiRodzic?.tytul;
@@ -166,7 +169,9 @@ export default function Pulpit() {
   const wyplaca =
     sc && wnioskodawca
       ? { kto: nieznany ? `${platnik} albo ZUS` : sc.wyplaca === 'ZUS' ? 'ZUS' : platnik, opis: nieznany ? `zależy od wielkości firmy (${imieRoli(s, wnioskodawca)})` : `zasiłek: ${imieRoli(s, wnioskodawca)}` }
-      : null;
+      : wynik.zwm
+        ? { kto: 'ZUS', opis: 'zasiłek do dnia porodu' }
+        : null;
 
   const doZrobienia = dokumenty
     .filter((d) => d.status === 'pilne' || d.status === 'zaplanowane')
@@ -212,6 +217,22 @@ export default function Pulpit() {
             </p>
           </div>
 
+          {s.sprawaPrzykladowa && (
+            <Link
+              href={`/sprawy/${s.sprawaPrzykladowa.id}`}
+              className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-gov-100 bg-gov-50 px-4 py-2.5 text-sm hover:border-gov-200"
+            >
+              <span>
+                <strong className="text-gov-900">Sprawa przykładowa ZUS {s.sprawaPrzykladowa.id}</strong>
+                <span className="text-slate-700"> · stan na {data(dzis)}</span>
+              </span>
+              <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-gov-700">
+                Porównanie z decyzją
+                <IkonaStrzalka className="h-4 w-4" />
+              </span>
+            </Link>
+          )}
+
           <Scena zdarzenie={zdarzenie} dni={roznicaDni(dzis, s.dataZdarzenia)} />
 
           {s.przyblizona && (
@@ -231,7 +252,7 @@ export default function Pulpit() {
         </div>
 
         <aside className="flex flex-col gap-6 lg:col-span-5 lg:min-h-0">
-          <div className="shrink-0"><Bohater suma={wynik.urlopy.suma} wariant={wariant} okres={okres} wyplaca={wyplaca} przyblizona={!!s.przyblizona} /></div>
+          <div className="shrink-0"><Bohater suma={suma} wariant={wariant} okres={okres} wyplaca={wyplaca} przyblizona={!!s.przyblizona} /></div>
 
           <section aria-labelledby="do-zrobienia" className="flex flex-col rounded-3xl border border-slate-200/90 bg-white p-5 shadow-sm sm:p-6 lg:min-h-0 lg:flex-1">
             <div className="flex shrink-0 items-center justify-between gap-2">

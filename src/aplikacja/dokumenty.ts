@@ -170,6 +170,23 @@ export function dokumenty(s: Sytuacja, plan: PlanRodzica, r: Rozpatrzenie, dzis:
       });
   }
 
+  // --- Zasiłek w wysokości zasiłku macierzyńskiego po upadłości, likwidacji albo śmierci pracodawcy ---
+  if (r.zwm)
+    dodaj({
+      id: 'zasilek-do-porodu',
+      kto: s.rola,
+      tytul: 'Wniosek o zasiłek w wysokości zasiłku macierzyńskiego (do dnia porodu)',
+      adresat: 'ZUS: eZUS, placówka albo poczta',
+      zalaczniki: [
+        'Zaświadczenie płatnika Z-3 od byłego pracodawcy (albo syndyka lub likwidatora)',
+        'Świadectwo pracy albo inny dokument z przyczyną rozwiązania umowy',
+        'Zaświadczenie lekarskie potwierdzające ciążę',
+      ],
+      terminOpis: 'jak najszybciej po rozwiązaniu umowy; prawo przedawnia się 6 miesięcy po okresie, za który przysługuje',
+      podstawaPrawna: r.zwm.podstawaPrawna,
+      formularz: { kod: 'ZUS', link: 'https://www.zus.pl/wzory-formularzy/zasilki', etykieta: 'Formularze zasiłkowe ZUS' },
+    });
+
   // --- Zgłoszenie urodzenia i odpis aktu ---
   if (urodzenie) {
     dodaj({

@@ -9,7 +9,10 @@ import type { Rozpatrzenie } from './rozpatrz';
 import { drugaRola, type Rola, type Sytuacja } from './sytuacja';
 
 export type StatusUprawnienia = 'przysluguje' | 'zalezy' | 'nie_przysluguje';
-export type RodzajUprawnienia = RodzajUrlopu | 'chorobowy_w_ciazy';
+export type RodzajUprawnienia = RodzajUrlopu | 'chorobowy_w_ciazy' | 'zasilek_do_porodu';
+
+/** Okres z wyliczeniem kwoty: okres zasiłku macierzyńskiego z silnika albo zasiłku do porodu. */
+export type OkresWyliczenia = Pick<OkresZasilku, 'od' | 'do' | 'dni' | 'stawka' | 'kwotaDzienna' | 'kwota' | 'wymiarPracy' | 'podwyzszenie'>;
 
 export interface Uprawnienie {
   id: string;
@@ -23,7 +26,7 @@ export interface Uprawnienie {
   termin?: ISODate;
   okres?: Okres;
   /** Okresy zasiłku z silnika: z nich ekran pokazuje wyliczenie. */
-  okresy: OkresZasilku[];
+  okresy: OkresWyliczenia[];
   dni: number;
   /** Suma z dopłatami. `null`: brak podstawy wymiaru; `undefined`: świadczenie, którego aplikacja nie liczy. */
   kwota?: Grosze | null;
@@ -54,6 +57,7 @@ export const NAZWY_UPRAWNIEN: Record<RodzajUprawnienia, string> = {
   rodzicielski: 'Zasiłek za urlop rodzicielski',
   ojcowski: 'Zasiłek za urlop ojcowski',
   chorobowy_w_ciazy: 'Zasiłek chorobowy w ciąży',
+  zasilek_do_porodu: 'Zasiłek w wysokości zasiłku macierzyńskiego (do porodu)',
 };
 
 const CHOROBOWE = new Set(['zasilek_chorobowy', 'wynagrodzenie_chorobowe', 'zasilek_chorobowy_po_ustaniu']);
@@ -166,6 +170,31 @@ function chorobowyWCiazy(s: Sytuacja, o: Osoba, zuzyte: Set<WynikReguly>): Upraw
   };
 }
 
+/** Zasiłek w wysokości zasiłku macierzyńskiego po upadłości, likwidacji albo śmierci pracodawcy (R-ZWM-01). */
+function zasilekDoPorodu(r: Rozpatrzenie, o: Osoba, zuzyte: Set<WynikReguly>): Uprawnienie | null {
+  const z = r.zwm;
+  if (!o.ja || !z) return null;
+  const regula = r.ryzyka.wyniki.find((x) => x.regula === 'R-ZWM-01' && x.status === 'przysluguje');
+  if (regula) zuzyte.add(regula);
+  return {
+    id: `zasilek-do-porodu-${o.rola}`,
+    kto: o.rola,
+    rodzaj: 'zasilek_do_porodu',
+    nazwa: NAZWY_UPRAWNIEN.zasilek_do_porodu,
+    status: 'przysluguje',
+    powod: regula?.komunikat ?? 'Umowa ustała w ciąży z przyczyn po stronie pracodawcy, więc do dnia porodu przysługuje zasiłek w wysokości zasiłku macierzyńskiego.',
+    okres: { od: z.od, do: z.do },
+    okresy: [{ od: z.od, do: z.do, dni: z.dni, stawka: z.stawka, kwotaDzienna: z.kwotaDzienna, kwota: z.kwota }],
+    dni: z.dni,
+    kwota: z.kwota,
+    stawki: [z.stawka],
+    podstawa: z.podstawa?.podstawa ?? null,
+    ryzyka: [],
+    szczegoly: ['Podstawę wymiaru liczymy z 12 miesięcy przed miesiącem, w którym powstało prawo (dzień po rozwiązaniu umowy).'],
+    podstawaPrawna: z.podstawaPrawna,
+  };
+}
+
 /** Typowe świadczenia, które odpadają przez fakt z Sytuacji rodziny (Q23). Przy martwym urodzeniu ich nie wyliczamy. */
 function nieprzyslugujace(s: Sytuacja, r: Rozpatrzenie, osoby: Osoba[], zuzyte: Set<WynikReguly>): Uprawnienie[] {
   if (s.martweUrodzenie) return [];
@@ -235,8 +264,9 @@ export function uprawnienia(s: Sytuacja, r: Rozpatrzenie): Uprawnienia {
   const zuzyte = new Set<WynikReguly>();
   const lista = osoby.flatMap((o) => {
     const ch = chorobowyWCiazy(s, o, zuzyte);
+    const zwm = zasilekDoPorodu(r, o, zuzyte);
     const zasilki = zasilkiOsoby(s, r, o, zuzyte).sort((a, b) => (a.okres!.od < b.okres!.od ? -1 : 1));
-    return [...(ch && ch.status !== 'nie_przysluguje' ? [ch] : []), ...zasilki];
+    return [...(ch && ch.status !== 'nie_przysluguje' ? [ch] : []), ...(zwm ? [zwm] : []), ...zasilki];
   });
   const nie = [
     ...osoby.map((o) => chorobowyWCiazy(s, o, new Set())).filter((x): x is Uprawnienie => x?.status === 'nie_przysluguje'),
