@@ -4,6 +4,8 @@ node_modules
 .env*
 docs/*.zip
 .next/
+.next-demo/
 next-env.d.ts
 data/parametry.json
 !.env.example
+.neon

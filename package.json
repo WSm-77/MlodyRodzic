@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "demo": "NEXT_DIST_DIR=.next-demo next build && NEXT_DIST_DIR=.next-demo next start -p 3123 -H 127.0.0.1",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"

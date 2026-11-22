@@ -1,0 +1,80 @@
+// Każde słowo widoczne w filmie, w jednym miejscu. Podpis: jedna linia, do ok. 60 znaków.
+const sekundy = (s: number) => (s < 10 ? s.toFixed(1).replace('.', ',') : String(Math.round(s)));
+
+export const COPY = {
+  brand: 'MłodyRodzic',
+  brandA: 'Młody',
+  brandB: 'Rodzic',
+  intro: {
+    kicker: 'HackNation 2026 · wyzwanie ZUS',
+    lead: 'Wszystkie zasiłki rodziny w jednym planie.',
+    sub: 'Uprawnienia, kwoty, wnioski i ryzyka – dla Twojej sytuacji.',
+    chips: ['Dane z ZUS', 'Kalkulator', 'Wnioski', 'Trudne sytuacje', 'Panel'],
+  },
+  /** Napis po każdym cięciu oczekiwania. Zostaje: dzięki niemu montaż jest jawny. */
+  skipped: (s: number) => `Pominięto ${sekundy(s)} s oczekiwania`,
+
+  logowanie: {
+    tag: '1/5 · Dane z ZUS',
+    card: {no: '01', title: 'Dane z ZUS', sub: 'Logowanie mObywatel i pobranie konta ZUS'},
+    window: 'MłodyRodzic – logowanie',
+    wybor: 'Logowanie przez mObywatel (symulacja na 7 kontach).',
+    pobieranie: 'Aplikacja pobiera dane z konta w ZUS (symulacja).',
+    dane: 'Ubezpieczenie, pracodawca i wynagrodzenia z ZUS.',
+    ezla: 'Podgląd e-ZLA: zwolnienie w ciąży z kodem B.',
+    platnik: 'Ponad 20 osób u płatnika? Od tego zależy, kto wypłaca.',
+    pulpit: 'Pulpit: suma zasiłków rodziny, okres i kto wypłaca.',
+  },
+  kalkulator: {
+    tag: '2/5 · Kalkulator',
+    card: {no: '02', title: 'Kalkulator', sub: 'Oboje rodzice, warianty stawki, podział i praca'},
+    window: 'MłodyRodzic – kalkulator',
+    warianty: 'Wariant 100% / 70% czy 81,5%? Liczymy oba naraz.',
+    zmiana: 'Jedno kliknięcie – cały plan przelicza się od nowa.',
+    podzial: 'Podział urlopu rodzicielskiego między mamę i tatę.',
+    os: 'Oś czasu: kto i kiedy jest na urlopie.',
+    praca: 'Praca na pół etatu: zasiłek maleje, urlop się wydłuża.',
+    suma: 'Suma prawie ta sama, ale rozłożona na dłuższy urlop.',
+  },
+  swiadczenia: {
+    tag: '3/5 · Świadczenia i wnioski',
+    card: {no: '03', title: 'Świadczenia i wnioski', sub: 'Podstawa wymiaru, przepisy, dokumenty i terminy'},
+    window: 'MłodyRodzic – świadczenia',
+    lista: 'Każde świadczenie: okres, stawka i kwota.',
+    szczegoly: 'Szczegóły: jak policzono kwotę i na jakim przepisie.',
+    wnioski: 'Wnioski: co złożyć, do kogo i do kiedy.',
+    kto: 'Wiadomo, czy wniosek idzie do pracodawcy, czy do ZUS.',
+    przygotuj: 'Przy każdej sprawie lista dokumentów do przygotowania.',
+  },
+  trudne: {
+    tag: '4/5 · Trudne sytuacje',
+    card: {no: '04', title: 'Trudne sytuacje', sub: 'Działalność, zaległość w składkach, wsparcie'},
+    window: 'MłodyRodzic – eZUS',
+    zaleglosc: 'Własna firma z zaległością w składkach.',
+    zaswiadczenie: 'Zaświadczenie o stanie rozliczeń (symulacja).',
+    pytanie: 'W razie wątpliwości – pytanie do ZUS (symulacja eZUS).',
+    wstrzymany: 'Zasiłek wstrzymany – i co zrobić, żeby go odblokować.',
+    wsparcie: 'Fundacje i telefony wsparcia na najtrudniejsze chwile.',
+  },
+  panel: {
+    tag: '5/5 · Panel ustawień',
+    card: {no: '05', title: 'Panel ustawień', sub: 'Parametry prawne zmieniane bez zmiany kodu'},
+    window: 'MłodyRodzic – panel ustawień',
+    logowanie: 'Pracownik loguje się do panelu osobnym hasłem.',
+    parametry: 'Stawki, wymiary i terminy – każdy z podstawą prawną.',
+    zmiana: 'Zmiana przepisów? Urlop ojcowski: 2 → 4 tygodnie.',
+    efekt: 'Kalkulator od razu liczy według nowej wartości.',
+  },
+  outro: {
+    title: 'Świadome decyzje',
+    title2: 'od pierwszego dnia.',
+    rows: [
+      ['Dane z ZUS', 'mObywatel, e-ZLA, stan rozliczeń'],
+      ['Kalkulator', 'warianty, podział urlopu, łączenie z pracą'],
+      ['Wnioski', 'dokumenty, adresat i termin każdej sprawy'],
+      ['Ryzyka i wsparcie', 'wstrzymane zasiłki, fundacje, telefony'],
+      ['Panel ustawień', 'parametry prawne bez zmiany kodu'],
+    ],
+    note: 'Nagranie działającej aplikacji na fikcyjnych danych. Logowanie mObywatel i eZUS są symulowane, wyliczenia robi silnik reguł (bez AI). Zmianę parametru cofnięto po nagraniu.',
+  },
+};
