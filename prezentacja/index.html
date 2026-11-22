@@ -167,7 +167,8 @@ strong { font-weight: 700; color: var(--gov-900); }
 .link { display: grid; grid-template-columns: 150px 1fr; align-items: baseline; padding: 24px 28px; border-radius: 22px; background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.14); }
 .link span { font: 700 20px/1 var(--f-tekst); letter-spacing: .12em; text-transform: uppercase; color: var(--coral-500); }
 .link b { font: 700 31px/1.2 var(--f-tekst); color: #fff; word-break: break-all; }
-.link.brak b { color: rgba(255,255,255,.55); font-weight: 600; }
+a.link { color: inherit; text-decoration: none; }
+a.link:hover { border-color: rgba(255,255,255,.35); }
 .blok { padding: 28px 32px; border-radius: 22px; background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.14); }
 .blok + .blok { margin-top: 18px; }
 .blok h3 { font: 800 28px/1.2 var(--f-display); color: #fff; }
@@ -396,9 +397,9 @@ strong { font-weight: 700; color: var(--gov-900); }
   <h2 class="reveal d1">Gotowe do testów dziś, <em>gotowe do wdrożenia</em> jutro</h2>
   <div class="siatka">
     <div class="linki">
-      <div class="link reveal d1"><span>Demo</span><b>mlodyrodzic.onrender.com</b></div>
-      <div class="link reveal d2"><span>Kod</span><b>github.com/WSm-77/MlodyRodzic</b></div>
-      <div class="link brak reveal d3"><span>Film</span><b>link do filmu – w opisie zgłoszenia</b></div>
+      <a class="link reveal d1" href="https://mlodyrodzic.onrender.com"><span>Demo</span><b>mlodyrodzic.onrender.com</b></a>
+      <a class="link reveal d2" href="https://github.com/WSm-77/MlodyRodzic"><span>Kod</span><b>github.com/WSm-77/MlodyRodzic</b></a>
+      <a class="link reveal d3" href="https://drive.google.com/file/d/1AcJqKItPPOotTkDkaxc68-enR-XTlVaK/view?usp=sharing"><span>Film</span><b>drive.google.com/file/d/1AcJqKItPPOotTkDkaxc68-enR-XTlVaK</b></a>
     </div>
     <div>
       <div class="blok reveal d2">
