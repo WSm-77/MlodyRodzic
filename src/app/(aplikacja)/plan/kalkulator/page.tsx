@@ -8,7 +8,7 @@
 
 import Link from 'next/link';
 import { useId, useState, type ReactNode } from 'react';
-import { PARAMETRY_2026, type Grosze, type OkresZasilku } from '@/silnik';
+import type { Grosze, OkresZasilku } from '@/silnik';
 import { dodajDni, porownaj, roznicaDni } from '@/silnik/wspolne/daty';
 import { czytelne, dataKrotka, NAZWY_URLOPOW, zl0 } from '@/aplikacja/format';
 import { drugaRola, type PlanRodzica, type Rola, type Sytuacja } from '@/aplikacja/sytuacja';
@@ -184,7 +184,7 @@ function OsCzasu({ okresy, imie }: { okresy: OkresZasilku[]; imie: (r: Rola) => 
 }
 
 export default function Kalkulator() {
-  const { sytuacja: s, gotowe, plan, ustawPlan, wynik, alternatywa, parametryZmienione } = useRozpatrzenie();
+  const { sytuacja: s, gotowe, plan, ustawPlan, wynik, alternatywa } = useRozpatrzenie();
   const [pracaOtwarta, setPracaOtwarta] = useState(false);
   if (!gotowe) return <Ladowanie />;
   if (!s || !wynik) return <BrakSytuacji />;
@@ -211,7 +211,6 @@ export default function Kalkulator() {
   };
   const role = [...new Set(okresy.map((o) => o.rodzic))].filter((r): r is Rola => r !== 'inny');
   const startOjcowskiego = dodajDni(s.dataZdarzenia, plan.ojcowskiPoDniach);
-  const niepotwierdzone = [...new Set([...wynik.urlopy.niepotwierdzoneParametry, ...(wynik.podstawa?.niepotwierdzoneParametry ?? [])])];
 
   const ostrzezenia = wynik.urlopy.ostrzezenia.length > 0 && (
     <Sekcja tytul="Na co uważać">
@@ -392,12 +391,6 @@ export default function Kalkulator() {
         </ol>
       </details>
 
-      {(niepotwierdzone.length > 0 || parametryZmienione) && (
-        <p className="mt-4 text-xs leading-relaxed text-slate-600">
-          {parametryZmienione && 'Parametry prawne zmieniono w panelu administracyjnym. '}
-          {niepotwierdzone.length > 0 && `Parametry do potwierdzenia: ${niepotwierdzone.map((k) => PARAMETRY_2026[k].zrodlo).join('; ')}.`}
-        </p>
-      )}
     </div>
   );
 }

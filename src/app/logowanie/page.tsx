@@ -133,7 +133,7 @@ export default function Logowanie() {
         zapiszPlan({ ...PLAN_DOMYSLNY, ...p.plan });
         setTimeout(() => router.push('/ezus?pobrano=1'), 500);
       })
-      .catch(() => setBlad('Nie udało się pobrać danych z symulowanego eZUS. Spróbuj ponownie.'));
+      .catch(() => setBlad('Nie udało się pobrać danych z eZUS. Spróbuj ponownie.'));
     return () => {
       anuluj = true;
       clearInterval(licznik);
