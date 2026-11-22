@@ -1,0 +1,14 @@
+{
+  "name": "mlodyrodzic-prezentacja",
+  "private": true,
+  "type": "module",
+  "description": "Narzędzia eksportu prezentacji (PPTX). Playwright i Chrome biorą się z ../video.",
+  "scripts": {
+    "pptx": "node narzedzia/pptx.mjs",
+    "pdf": "node narzedzia/pdf.mjs"
+  },
+  "dependencies": {
+    "jszip": "3.10.1",
+    "pptxgenjs": "4.0.1"
+  }
+}

@@ -32,7 +32,7 @@ html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background:
 .deck-viewport { position: fixed; inset: 0; overflow: hidden; background: var(--stage-bg, #000); }
 .deck-stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; transform-origin: 0 0; background: var(--slide-bg, #fff); }
 .slide { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: hidden; display: block; visibility: hidden; opacity: 0; pointer-events: none; background: var(--slide-bg, #fff); }
-.slide.active, .slide.visible { visibility: visible; opacity: 1; pointer-events: auto; z-index: 1; }
+.slide.active { visibility: visible; opacity: 1; pointer-events: auto; z-index: 1; }
 img, video, canvas, svg { max-width: 100%; max-height: 100%; }
 .deck-controls { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 1000; }
 @page { size: 1920px 1080px; margin: 0; }
@@ -44,8 +44,16 @@ img, video, canvas, svg { max-width: 100%; max-height: 100%; }
   .slide:last-child { break-after: auto; page-break-after: auto; }
   .deck-controls { display: none !important; }
   .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+  *, *::before, *::after { animation: none !important; }
 }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; } }
+/* Tryb do eksportu PPTX: wszystko od razu w stanie końcowym */
+html.statyczny, html.statyczny *, html.statyczny *::before, html.statyczny *::after { transition: none !important; animation: none !important; }
+/* Ograniczony ruch: bez przesunięć i pętli, tylko krótkie przenikanie treści */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; }
+  .slide { transition: none !important; }
+  .reveal { transform: none !important; transition: opacity .3s ease !important; }
+}
 
 /* ===========================================
    TYPOGRAFIA I WSPÓLNE ELEMENTY (rozmiary dla 1920×1080)
@@ -100,11 +108,40 @@ strong { font-weight: 700; color: var(--gov-900); }
 .znak b { font: 800 21px/1 var(--f-display); color: var(--gov-900); letter-spacing: -0.01em; }
 .znak b span { color: var(--coral-600); }
 
-/* Animacje wejścia (aktywny slajd ma .visible) */
-.reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
-.slide.visible .reveal { opacity: 1; transform: none; }
-.slide.visible .reveal.d1 { transition-delay: .08s; } .slide.visible .reveal.d2 { transition-delay: .16s; }
-.slide.visible .reveal.d3 { transition-delay: .24s; } .slide.visible .reveal.d4 { transition-delay: .32s; }
+/* ===========================================
+   ANIMACJE. Aktywny slajd dostaje .visible; stan bez animacji = stan końcowy (druk, PDF, PPTX).
+   =========================================== */
+/* Przejście między slajdami: przenikanie */
+.slide { transition: opacity .6s var(--ease), visibility 0s linear .6s; }
+.slide.active { transition: opacity .6s var(--ease), visibility 0s; }
+
+/* Wejście elementów, kolejno co 0,12 s (klasy d1–d6) */
+.reveal { opacity: 0; transform: translateY(34px); transition: opacity .8s var(--ease), transform .9s var(--ease); }
+.reveal.z-lewej { transform: translateX(-70px); }
+.reveal.z-prawej { transform: translateX(70px); }
+.reveal.skala { transform: scale(.86); }
+.telefon.reveal { transform: translateY(140px) rotate(5deg); transition-duration: 1s, 1.25s; }
+.slide.visible .reveal { opacity: 1; transform: none; transition-delay: var(--d, 0s); }
+.d1 { --d: .12s; } .d2 { --d: .24s; } .d3 { --d: .36s; } .d4 { --d: .48s; } .d5 { --d: .6s; } .d6 { --d: .72s; }
+
+/* Ikony i numery wskakują chwilę po swoim wierszu */
+@keyframes wskocz { 0% { transform: scale(0) rotate(-18deg); } 60% { transform: scale(1.18) rotate(4deg); } 100% { transform: none; } }
+@keyframes pojaw { 0% { opacity: 0; transform: scale(.6); } 100% { opacity: 1; transform: none; } }
+.slide.visible .reveal .ikona, .slide.visible .eyebrow.reveal .nr { animation: wskocz .7s var(--ease) both; animation-delay: calc(var(--d, 0s) + .3s); }
+.slide.visible .moduly span { animation: pojaw .5s var(--ease) both; animation-delay: calc(var(--d, 0s) + .45s); }
+.slide.visible .moduly span:nth-child(2) { animation-delay: calc(var(--d, 0s) + .6s); }
+.slide.visible .moduly span:nth-child(3) { animation-delay: calc(var(--d, 0s) + .75s); }
+
+/* Akcenty w pętli: pulsująca kropka, unoszące się serce i telefon (osobna właściwość translate, nie koliduje z transform) */
+@keyframes puls { 0% { box-shadow: 0 0 0 0 rgba(244,112,104,.55); } 70%, 100% { box-shadow: 0 0 0 20px rgba(244,112,104,0); } }
+@keyframes unos { 0%, 100% { translate: 0 0; } 50% { translate: 0 -16px; } }
+.slide.visible .pasek .kropka { animation: puls 2.2s ease-out 1.2s infinite; }
+.s-tytul.visible .serce { animation: unos 7s ease-in-out 1.4s infinite; }
+.s-tytul.visible .obrot .telefon { animation: unos 6s ease-in-out 1.8s infinite reverse; }
+.s-koniec.visible .serce-male { animation: unos 6s ease-in-out 1.2s infinite; }
+
+/* Liczby odliczane w górę (JS) */
+[data-licz] { font-variant-numeric: tabular-nums; }
 
 /* ===========================================
    SLAJD 1: TYTUŁ
@@ -121,7 +158,7 @@ strong { font-weight: 700; color: var(--gov-900); }
 .s-tytul .meta b { display: block; font: 700 26px/1.3 var(--f-tekst); color: var(--gov-900); margin-top: 6px; }
 .s-tytul .wizual { position: relative; width: 760px; height: 900px; }
 .s-tytul .serce { position: absolute; width: 560px; left: 0; top: 70px; }
-.s-tytul .wizual .telefon { position: absolute; right: 0; top: 0; transform: rotate(3deg); }
+.s-tytul .wizual .obrot { position: absolute; right: 0; top: 0; transform: rotate(3deg); }
 
 /* ===========================================
    SLAJD 2: PROBLEM (karty)
@@ -200,9 +237,9 @@ a.link:hover { border-color: rgba(255,255,255,.35); }
         <div>Zespół<b>Wiktor Sędzimir · Szymon Rybski</b></div>
       </div>
     </div>
-    <div class="wizual reveal d2">
-      <img class="serce" src="zrzuty/ilustracja.svg" alt="">
-      <div class="telefon"><img src="zrzuty/pulpit.png" alt="Pulpit aplikacji z sumą zasiłków rodziny"></div>
+    <div class="wizual">
+      <img class="serce reveal skala d2" src="zrzuty/ilustracja.svg" alt="">
+      <div class="obrot"><div class="telefon reveal d3"><img src="zrzuty/pulpit.png" alt="Pulpit aplikacji z sumą zasiłków rodziny"></div></div>
     </div>
   </div>
 </section>
@@ -212,28 +249,28 @@ a.link:hover { border-color: rgba(255,255,255,.35); }
   <span class="eyebrow reveal"><span class="nr">02</span>Problem</span>
   <h2 class="reveal d1">Pięć świadczeń, dwóch płatników, kilka terminów – i <em>żadnej mapy</em></h2>
   <div class="karty">
-    <div class="karta reveal d1">
+    <div class="karta reveal d2">
       <div class="pyt">Ile <span>dostanę?</span></div>
       <p>Podstawa z 12 miesięcy, wariant 100%→70% albo 81,5%, inne zasady na umowie, zleceniu i działalności.</p>
       <span class="liczba">2 warianty<small>jeden wybór na cały okres urlopów</small></span>
     </div>
-    <div class="karta reveal d2">
+    <div class="karta reveal d3">
       <div class="pyt">Kto <span>wypłaca?</span></div>
       <p>Pracodawca, który zgłasza ponad 20 osób, albo ZUS. Od tego zależy, gdzie i jak złożyć wniosek.</p>
-      <span class="liczba">&gt;20 osób<small>próg z art. 61 ustawy zasiłkowej</small></span>
-    </div>
-    <div class="karta reveal d3">
-      <div class="pyt">Do <span>kiedy?</span></div>
-      <p>Zgłoszenie urodzenia, wniosek o urlop macierzyński, decyzja o 81,5% – terminy biegną od porodu.</p>
-      <span class="liczba">21 dni<small>na wniosek o wariant 81,5%</small></span>
+      <span class="liczba">&gt;<span data-licz="20">20</span> osób<small>próg z art. 61 ustawy zasiłkowej</small></span>
     </div>
     <div class="karta reveal d4">
+      <div class="pyt">Do <span>kiedy?</span></div>
+      <p>Zgłoszenie urodzenia, wniosek o urlop macierzyński, decyzja o 81,5% – terminy biegną od porodu.</p>
+      <span class="liczba"><span data-licz="21">21</span> dni<small>na wniosek o wariant 81,5%</small></span>
+    </div>
+    <div class="karta reveal d5">
       <div class="pyt">Co może <span>pójść źle?</span></div>
       <p>Zaległość w składkach, przerwa w dobrowolnym ubezpieczeniu, umowa kończąca się w ciąży.</p>
       <span class="liczba">1%<small>płacy minimalnej – tyle zaległości wstrzymuje zasiłek</small></span>
     </div>
   </div>
-  <div class="pasek reveal d4"><span class="kropka"></span><span>Dziś rodzic składa odpowiedź z <strong>ustawy zasiłkowej, Kodeksu pracy, poradników ZUS i gov.pl</strong> – zwykle wtedy, gdy ma na rękach noworodka.</span></div>
+  <div class="pasek reveal d6"><span class="kropka"></span><span>Dziś rodzic składa odpowiedź z <strong>ustawy zasiłkowej, Kodeksu pracy, poradników ZUS i gov.pl</strong> – zwykle wtedy, gdy ma na rękach noworodka.</span></div>
   <div class="stopka"><span class="znak"><i>M</i><b>Młody<span>Rodzic</span></b></span><span>2 / 10</span></div>
 </section>
 
@@ -249,14 +286,14 @@ a.link:hover { border-color: rgba(255,255,255,.35); }
         <li class="reveal d3"><span class="ikona">3</span><div><b>Co złożyć, komu i do kiedy?</b><span>Lista wniosków z terminem, adresatem i linkiem do formularza.</span></div></li>
         <li class="reveal d4"><span class="ikona coral">!</span><div><b>Na co uważać?</b><span>Ryzyka utraty zasiłku wykryte z wyprzedzeniem, z przepisem i tym, co zrobić.</span></div></li>
       </ul>
-      <div class="chipy reveal d4">
+      <div class="chipy reveal d5">
         <span class="chip">poród · adopcja · rodzina zastępcza</span>
         <span class="chip">mama i tata</span>
         <span class="chip">umowa o pracę · zlecenie · działalność</span>
       </div>
     </div>
-    <div class="telefony reveal d2">
-      <div class="telefon"><img src="zrzuty/start.png" alt="Ekran powitalny: Wszystkie zasiłki w jednym planie"></div>
+    <div class="telefony">
+      <div class="telefon reveal d2"><img src="zrzuty/start.png" alt="Ekran powitalny: Wszystkie zasiłki w jednym planie"></div>
     </div>
   </div>
   <div class="stopka"><span class="znak"><i>M</i><b>Młody<span>Rodzic</span></b></span><span>3 / 10</span></div>
@@ -273,11 +310,11 @@ a.link:hover { border-color: rgba(255,255,255,.35); }
         <li class="reveal d2"><span class="ikona">2</span><div><b>Przewodnik w 6 krokach</b><span>Pytania w języku rodzica, zapis na bieżąco, każdy krok z wyjaśnieniem.</span></div></li>
         <li class="reveal d3"><span class="ikona">3</span><div><b>Szybkie wyliczenie</b><span>Około minuty, wynik przybliżony – do sprawdzenia, zanim zbierze się dokumenty.</span></div></li>
       </ul>
-      <p class="uwaga reveal d4"><strong>Do testów jury:</strong> 8 kont testowych opartych na sprawach przykładowych ZUS. Wybór konta = wczytanie wniosku i jego przeliczenie.</p>
+      <p class="uwaga reveal d5"><strong>Do testów jury:</strong> 8 kont testowych opartych na sprawach przykładowych ZUS. Wybór konta = wczytanie wniosku i jego przeliczenie.</p>
     </div>
-    <div class="telefony schodki reveal d2">
-      <div class="telefon"><img src="zrzuty/logowanie.png" alt="Logowanie przez mObywatel z wyborem konta"></div>
-      <div class="telefon"><img src="zrzuty/ezus.png" alt="Dane pobrane z ZUS"></div>
+    <div class="telefony schodki">
+      <div class="telefon reveal d2"><img src="zrzuty/logowanie.png" alt="Logowanie przez mObywatel z wyborem konta"></div>
+      <div class="telefon reveal d4"><img src="zrzuty/ezus.png" alt="Dane pobrane z ZUS"></div>
     </div>
   </div>
   <div class="stopka"><span class="znak"><i>M</i><b>Młody<span>Rodzic</span></b></span><span>4 / 10</span></div>
@@ -290,14 +327,14 @@ a.link:hover { border-color: rgba(255,255,255,.35); }
       <span class="eyebrow reveal"><span class="nr">05</span>Pulpit</span>
       <h2 class="reveal d1">Od razu widać <em>sumę, okres</em> i to, co pilne</h2>
       <ul class="punkty">
-        <li class="reveal d1"><span class="ikona">zł</span><div><b>Łączna kwota dla rodziny</b><span>Np. <span class="kwota">71 729 zł</span> brutto za 61 tygodni, z wybranym wariantem i informacją, kto wypłaca.</span></div></li>
+        <li class="reveal d1"><span class="ikona">zł</span><div><b>Łączna kwota dla rodziny</b><span>Np. <span class="kwota"><span data-licz="71729">71 729</span> zł</span> brutto za 61 tygodni, z wybranym wariantem i informacją, kto wypłaca.</span></div></li>
         <li class="reveal d2"><span class="ikona coral">!</span><div><b>Do zrobienia teraz</b><span>Pilne sprawy z licznikiem dni i bezpośrednim przejściem do gov.pl albo formularza ZUS.</span></div></li>
         <li class="reveal d3"><span class="ikona">§</span><div><b>Świadczenia z uzasadnieniem</b><span>Każde z kwotą, okresem, statusem „przysługuje” i podstawą prawną w szczegółach.</span></div></li>
       </ul>
     </div>
-    <div class="telefony schodki reveal d2">
-      <div class="telefon"><img src="zrzuty/pulpit.png" alt="Pulpit z sumą zasiłków"></div>
-      <div class="telefon"><img src="zrzuty/swiadczenia.png" alt="Lista świadczeń z kwotami"></div>
+    <div class="telefony schodki">
+      <div class="telefon reveal d2"><img src="zrzuty/pulpit.png" alt="Pulpit z sumą zasiłków"></div>
+      <div class="telefon reveal d4"><img src="zrzuty/swiadczenia.png" alt="Lista świadczeń z kwotami"></div>
     </div>
   </div>
   <div class="stopka"><span class="znak"><i>M</i><b>Młody<span>Rodzic</span></b></span><span>5 / 10</span></div>
@@ -316,9 +353,9 @@ a.link:hover { border-color: rgba(255,255,255,.35); }
         <li class="reveal d4"><span class="ikona">↦</span><div><b>Oś czasu obojga rodziców</b><span>Kto, jaki urlop i od kiedy – w jednym widoku.</span></div></li>
       </ul>
     </div>
-    <div class="telefony schodki reveal d2">
-      <div class="telefon"><img src="zrzuty/kalkulator.png" alt="Kalkulator: suma i warianty stawki"></div>
-      <div class="telefon"><img src="zrzuty/kalkulator-os.png" alt="Kalkulator: oś czasu urlopów"></div>
+    <div class="telefony schodki">
+      <div class="telefon reveal d2"><img src="zrzuty/kalkulator.png" alt="Kalkulator: suma i warianty stawki"></div>
+      <div class="telefon reveal d4"><img src="zrzuty/kalkulator-os.png" alt="Kalkulator: oś czasu urlopów"></div>
     </div>
   </div>
   <div class="stopka"><span class="znak"><i>M</i><b>Młody<span>Rodzic</span></b></span><span>6 / 10</span></div>
@@ -336,9 +373,9 @@ a.link:hover { border-color: rgba(255,255,255,.35); }
         <li class="reveal d3"><span class="ikona">✓</span><div><b>Od razu następny krok</b><span>Zaświadczenie o stanie rozliczeń do druku i pytanie do ZUS w eZUS.</span></div></li>
       </ul>
     </div>
-    <div class="telefony schodki reveal d2">
-      <div class="telefon"><img src="zrzuty/trudne-pulpit.png" alt="Pulpit z ostrzeżeniem o zaległości"></div>
-      <div class="telefon"><img src="zrzuty/trudne-zaswiadczenie.png" alt="Zaświadczenie o stanie rozliczeń"></div>
+    <div class="telefony schodki">
+      <div class="telefon reveal d2"><img src="zrzuty/trudne-pulpit.png" alt="Pulpit z ostrzeżeniem o zaległości"></div>
+      <div class="telefon reveal d4"><img src="zrzuty/trudne-zaswiadczenie.png" alt="Zaświadczenie o stanie rozliczeń"></div>
     </div>
   </div>
   <div class="stopka"><span class="znak"><i>M</i><b>Młody<span>Rodzic</span></b></span><span>7 / 10</span></div>
@@ -356,9 +393,9 @@ a.link:hover { border-color: rgba(255,255,255,.35); }
         <li class="reveal d3"><span class="ikona coral">♡</span><div><b>Wsparcie w trudnych sytuacjach</b><span>Poronienie, wcześniactwo, ciężka choroba lub śmierć dziecka: organizacje i bezpłatne telefony.</span></div></li>
       </ul>
     </div>
-    <div class="telefony schodki reveal d2">
-      <div class="telefon"><img src="zrzuty/wnioski.png" alt="Wnioski i terminy"></div>
-      <div class="telefon"><img src="zrzuty/wsparcie.png" alt="Wsparcie w trudnych sytuacjach"></div>
+    <div class="telefony schodki">
+      <div class="telefon reveal d2"><img src="zrzuty/wnioski.png" alt="Wnioski i terminy"></div>
+      <div class="telefon reveal d4"><img src="zrzuty/wsparcie.png" alt="Wsparcie w trudnych sytuacjach"></div>
     </div>
   </div>
   <div class="stopka"><span class="znak"><i>M</i><b>Młody<span>Rodzic</span></b></span><span>8 / 10</span></div>
@@ -377,14 +414,14 @@ a.link:hover { border-color: rgba(255,255,255,.35); }
         <div class="warstwa reveal d3"><div class="nazwa">Panel ustawień</div><div class="opis">74 parametry prawne (stawki, płaca minimalna, limity, terminy) zmieniane bez wdrożenia, przez REST API</div></div>
         <div class="warstwa reveal d4"><div class="nazwa">Dane i hosting</div><div class="opis">PostgreSQL (Neon) dla parametrów, deploy na Render</div></div>
       </div>
-      <div class="liczby reveal d4">
-        <div><b>274</b><span>testy automatyczne</span></div>
-        <div><b>T01–T14</b><span>sprawy przykładowe ZUS w testach</span></div>
-        <div><b>21</b><span>reguł ryzyka</span></div>
+      <div class="liczby">
+        <div class="reveal d4"><b data-licz="274">274</b><span>testy automatyczne</span></div>
+        <div class="reveal d5"><b>T01–T14</b><span>sprawy przykładowe ZUS w testach</span></div>
+        <div class="reveal d6"><b data-licz="21">21</b><span>reguł ryzyka</span></div>
       </div>
     </div>
-    <div class="telefony reveal d2">
-      <div class="telefon"><img src="zrzuty/admin.png" alt="Panel ustawień parametrów prawnych"><span class="podpis">Panel ustawień dla pracownika</span></div>
+    <div class="telefony">
+      <div class="telefon reveal d2"><img src="zrzuty/admin.png" alt="Panel ustawień parametrów prawnych"><span class="podpis">Panel ustawień dla pracownika</span></div>
     </div>
   </div>
   <div class="stopka"><span class="znak"><i>M</i><b>Młody<span>Rodzic</span></b></span><span>9 / 10</span></div>
@@ -392,17 +429,17 @@ a.link:hover { border-color: rgba(255,255,255,.35); }
 
 <!-- ============ 10. PODSUMOWANIE ============ -->
 <section class="slide s-koniec" aria-label="Podsumowanie">
-  <img class="serce-male reveal" src="zrzuty/ilustracja.svg" alt="">
+  <img class="serce-male reveal skala d3" src="zrzuty/ilustracja.svg" alt="">
   <span class="eyebrow reveal"><span class="nr">10</span>Sprawdź sam</span>
   <h2 class="reveal d1">Gotowe do testów dziś, <em>gotowe do wdrożenia</em> jutro</h2>
   <div class="siatka">
     <div class="linki">
-      <a class="link reveal d1" href="https://mlodyrodzic.onrender.com"><span>Demo</span><b>mlodyrodzic.onrender.com</b></a>
-      <a class="link reveal d2" href="https://github.com/WSm-77/MlodyRodzic"><span>Kod</span><b>github.com/WSm-77/MlodyRodzic</b></a>
-      <a class="link reveal d3" href="https://drive.google.com/file/d/1AcJqKItPPOotTkDkaxc68-enR-XTlVaK/view?usp=sharing"><span>Film</span><b>drive.google.com/file/d/1AcJqKItPPOotTkDkaxc68-enR-XTlVaK</b></a>
+      <a class="link reveal z-lewej d1" href="https://mlodyrodzic.onrender.com"><span>Demo</span><b>mlodyrodzic.onrender.com</b></a>
+      <a class="link reveal z-lewej d2" href="https://github.com/WSm-77/MlodyRodzic"><span>Kod</span><b>github.com/WSm-77/MlodyRodzic</b></a>
+      <a class="link reveal z-lewej d3" href="https://drive.google.com/file/d/1AcJqKItPPOotTkDkaxc68-enR-XTlVaK/view?usp=sharing"><span>Film</span><b>drive.google.com/file/d/1AcJqKItPPOotTkDkaxc68-enR-XTlVaK</b></a>
     </div>
     <div>
-      <div class="blok reveal d2">
+      <div class="blok reveal z-prawej d2">
         <h3>Droga do wdrożenia</h3>
         <ul>
           <li>logowanie mObywatel i dane z PUE/eZUS przez API</li>
@@ -410,7 +447,7 @@ a.link:hover { border-color: rgba(255,255,255,.35); }
           <li>parametry utrzymywane przez pracowników ZUS w panelu</li>
         </ul>
       </div>
-      <div class="blok reveal d3">
+      <div class="blok reveal z-prawej d4">
         <h3>Sztuczna inteligencja</h3>
         <p><strong>Aplikacja nie używa AI</strong> – wyniki liczy deterministyczny silnik reguł. Przy tworzeniu pomagały Claude Code (kod, testy) i Google Stitch (makiety, ilustracja).</p>
       </div>
@@ -458,10 +495,35 @@ class SlidePresentation {
     this.show(this.current);
   }
   show(i) {
+    const poprzedni = this.current;
     this.current = Math.max(0, Math.min(i, this.slides.length - 1));
-    this.slides.forEach((s, n) => { s.classList.toggle('active', n === this.current); s.classList.toggle('visible', n === this.current); });
+    const slajd = this.slides[this.current];
+    this.slides.forEach((s, n) => s.classList.toggle('active', n === this.current));
+    // Poprzedni slajd traci .visible dopiero po przenikaniu, żeby jego treść nie „uciekała” w trakcie.
+    slajd.classList.add('visible');
+    clearTimeout(this.sprzatanie);
+    this.sprzatanie = setTimeout(() => this.slides.forEach((s, n) => { if (n !== this.current) s.classList.remove('visible'); }), 650);
+    if (poprzedni !== this.current || !this.odliczone) { this.odliczone = true; this.odliczaj(slajd); }
     this.licznik.textContent = `${this.current + 1} / ${this.slides.length}`;
     history.replaceState(null, '', `#${this.current + 1}`);
+  }
+  // Liczby z data-licz rosną od zera, zsynchronizowane z wejściem swojego elementu.
+  odliczaj(slajd) {
+    if (document.documentElement.classList.contains('statyczny') || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    slajd.querySelectorAll('[data-licz]').forEach(el => {
+      const cel = parseFloat(el.dataset.licz);
+      const format = v => Math.round(v).toLocaleString('pl-PL');
+      const opoznienie = (parseFloat(getComputedStyle(el).getPropertyValue('--d')) || 0) * 1000 + 200;
+      const start = performance.now() + opoznienie, czas = 1400;
+      el.textContent = format(0);
+      const krok = t => {
+        const p = Math.min(1, Math.max(0, (t - start) / czas));
+        el.textContent = format(cel * (1 - Math.pow(1 - p, 3)));
+        if (p < 1 && this.slides[this.current] === slajd) requestAnimationFrame(krok);
+        else el.textContent = format(cel);
+      };
+      requestAnimationFrame(krok);
+    });
   }
 }
 new SlidePresentation();
