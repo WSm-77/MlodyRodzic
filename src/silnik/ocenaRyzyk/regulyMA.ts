@@ -74,7 +74,7 @@ function wyrejestrowanieDobrowolnego(k: KontekstOceny, dzien: ISODate): WynikReg
       swiadczenie: 'zasilek_macierzynski',
       skutek: { od: okres.od, do: okres.do },
       komunikat: `Zasiłek za okres od ${okres.od} do ${okres.do} nie przysługuje: ten okres nie następuje bezpośrednio po poprzednim, a w dniu jego rozpoczęcia nie masz ubezpieczenia chorobowego (wyrejestrowanie z dobrowolnego ubezpieczenia na czas zasiłku). Zgłoś się do ubezpieczenia chorobowego przed rozpoczęciem kolejnego urlopu albo zaplanuj go bez przerwy.`,
-      podstawaPrawna: ['UZ art. 29 ust. 1', 'sprawa przykładowa T06'],
+      podstawaPrawna: ['UZ art. 29 ust. 1'],
     });
   }
   return wyniki;

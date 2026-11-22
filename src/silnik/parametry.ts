@@ -188,7 +188,7 @@ export const PARAMETRY_2026: ParametryPrawne = {
   dniMiesiacaZasilkowego: { wartosc: 30, zrodlo: `${UZ} art. 11 ust. 5 (w zw. z art. 22)`, status: 'potwierdzony' },
   dataJednegoOkresuZasilkowego: {
     wartosc: '2027-01-01',
-    zrodlo: `${UZ} art. 9 ust. 4, art. 17 ust. 1c–1e (w mocy od 1.01.2027; OK-8 w uprawnienia-w-ciazy-i-ryzyka.md)`,
+    zrodlo: `${UZ} art. 9 ust. 4, art. 17 ust. 1c–1e (w mocy od 1.01.2027)`,
     status: 'do_potwierdzenia',
   },
 

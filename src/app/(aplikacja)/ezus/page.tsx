@@ -165,7 +165,7 @@ function ZapytajZus() {
         </span>
         <div className="min-w-0">
           <h2 className="text-[15px] font-bold text-slate-900">Zapytaj ZUS o swoją sprawę</h2>
-          <p className="text-sm text-slate-600">W eZUS wiadomość trafia do konsultanta. Tu odpowiedź jest symulowana.</p>
+          <p className="text-sm text-slate-600">Wiadomość trafi do konsultanta ZUS.</p>
         </div>
       </div>
       {watek.length > 0 && (
