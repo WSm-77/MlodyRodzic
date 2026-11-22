@@ -19,7 +19,7 @@ if (process.argv.includes('--podglad')) {
   const n = await page.locator('.slide').count();
   for (let i = 1; i <= n; i++) {
     await page.evaluate(i => { location.hash = '#' + i; dispatchEvent(new KeyboardEvent('keydown', {key: 'Home'})); for (let k = 1; k < i; k++) dispatchEvent(new KeyboardEvent('keydown', {key: 'ArrowRight'})); }, i);
-    await page.waitForTimeout(1100);
+    await page.waitForTimeout(2600);
     await page.screenshot({path: path.join(out, `slajd-${String(i).padStart(2, '0')}.png`)});
   }
   console.log('podgląd:', n, 'slajdów');
